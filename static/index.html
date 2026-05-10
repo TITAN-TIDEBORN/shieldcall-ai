@@ -434,7 +434,7 @@
             </button>
             <button class="nav-link" data-tab="scan" onclick="switchTab('scan')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                Voice Scanner
+                Live AI Screener
             </button>
             <button class="nav-link" data-tab="analytics" onclick="switchTab('analytics')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
@@ -573,19 +573,19 @@
                     <!-- LEFT: Chat Interface -->
                     <div class="card" style="display: flex; flex-direction: column; height: 100%; margin-bottom: 0;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h2 style="margin: 0; font-size: 1.25rem;">Forensic Analysis Chat</h2>
-                            <button class="btn-secondary" onclick="resetScanHistory()">Clear Session</button>
+                            <h2 style="margin: 0; font-size: 1.25rem;">Live AI Screening Session</h2>
+                            <button class="btn-secondary" onclick="resetScanHistory()">End Call Session</button>
                         </div>
                         
                         <div id="scanChatBox" class="transcript-box" style="flex: 1; margin-bottom: 1.5rem;">
-                            <div class="msg ai">Forensic engine initialized. Speak to start analysis...</div>
+                            <div class="msg ai">Assistant initialized. I will talk to the caller directly. Hold your phone to the mic...</div>
                         </div>
 
                         <div style="display: flex; flex-direction: column; gap: 1rem;">
                             <div id="scanInterimText" style="font-size: 0.875rem; color: var(--primary); min-height: 1.5rem; font-weight: 500;"></div>
                             <button id="btnScanVoice" onclick="toggleVoiceScan()" style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 0.75rem; background: var(--primary); box-shadow: 0 0 20px var(--primary-glow);">
                                 <span id="scanVoiceIcon">🎙️</span>
-                                <span id="scanVoiceText">Initialize Listening</span>
+                                <span id="scanVoiceText">Initialize Screening</span>
                             </button>
                         </div>
                     </div>
@@ -707,7 +707,7 @@
         const tabTitles = {
             'live': 'Live Call Intelligence',
             'recent': 'Recent Call Records',
-            'scan': 'Audio Forensic Scan',
+            'scan': 'Live AI Screener',
             'analytics': 'System Analytics',
             'settings': 'Engine Settings'
         };
@@ -1062,17 +1062,17 @@
             const box = document.getElementById('scanChatBox');
             if (!box) return;
 
-            // Add user message to UI
+            // Add Caller message to UI (Representing the person on the phone)
             const userMsg = document.createElement('div');
             userMsg.className = 'msg caller';
-            userMsg.textContent = text;
+            userMsg.innerHTML = `<small style="opacity:0.6; display:block; margin-bottom:4px;">EXTERNAL CALLER</small> ${text}`;
             box.appendChild(userMsg);
             
             // Add "Analyzing" placeholder
             const placeholder = document.createElement('div');
             placeholder.className = 'msg ai';
             placeholder.id = 'scanPlaceholder';
-            placeholder.innerHTML = '<span class="pulse"></span> Forensic analysis in progress...';
+            placeholder.innerHTML = '<span class="pulse"></span> Assistant is responding...';
             placeholder.style.fontStyle = 'italic';
             placeholder.style.opacity = '0.7';
             box.appendChild(placeholder);
@@ -1092,22 +1092,21 @@
                 scanHistory.push({role: 'ai', text: data.ai_reply});
                 if(scanHistory.length > 10) scanHistory = scanHistory.slice(-10);
 
-                // Add AI reply to UI
+                // Add Assistant reply to UI (AI speaking to the caller)
                 const aiMsg = document.createElement('div');
                 aiMsg.className = 'msg ai';
                 if (data.risk_score >= 60) {
                     aiMsg.style.borderLeft = '4px solid var(--danger)';
                     aiMsg.style.background = 'rgba(239, 68, 68, 0.1)';
-                    aiMsg.style.color = '#fecaca';
                 }
-                aiMsg.textContent = data.ai_reply;
+                aiMsg.innerHTML = `<small style="opacity:0.6; display:block; margin-bottom:4px;">SHIELDCALL ASSISTANT</small> ${data.ai_reply}`;
                 box.appendChild(aiMsg);
                 box.scrollTop = box.scrollHeight;
                 
-                // Speak the reply
+                // Speak the reply directly to the caller
                 speakText(data.ai_reply, data.detected_language || "English", 'ai');
 
-                // Update Metrics
+                // Update Forensic Metrics for the user
                 document.getElementById('scanResults').style.display = 'block';
                 const riskBadge = document.getElementById('scanRiskBadge');
                 riskBadge.textContent = `${data.risk_score}/100`;
@@ -1115,7 +1114,7 @@
                 const scamBadge = document.getElementById('scanScamBadge');
                 scamBadge.textContent = data.scam_status.toUpperCase();
                 scamBadge.className = 'badge ' + (data.scam_status === 'clean' ? 'pass' : 'fail');
-                document.getElementById('scanSignalsList').innerHTML = data.signals.map(s => `• ${s}`).join('<br>');
+                document.getElementById('scanSignalsList').innerHTML = (data.signals || []).map(s => `• ${s}`).join('<br>');
             }).catch(err => {
                 const ph = document.getElementById('scanPlaceholder');
                 if (ph) ph.remove();
