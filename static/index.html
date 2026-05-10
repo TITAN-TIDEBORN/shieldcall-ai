@@ -3,331 +3,645 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShieldCall AI</title>
+    <title>ShieldCall AI | Security Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-dark: #0f172a;
+            --bg-deep: #020617;
+            --bg-sidebar: #0f172a;
             --bg-card: #1e293b;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.5);
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
-            --border: #334155;
+            --border: rgba(255, 255, 255, 0.1);
+            --sidebar-width: 260px;
         }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background-color: var(--bg-dark);
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-deep);
             color: var(--text-main);
             margin: 0;
             padding: 0;
             display: flex;
-            flex-direction: column;
             height: 100vh;
+            overflow: hidden;
         }
-        /* Header */
+
+        /* Sidebar Styling */
+        aside {
+            width: var(--sidebar-width);
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        nav {
+            flex: 1;
+            padding: 1rem 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            font-family: inherit;
+            font-size: 0.9375rem;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+        }
+
+        .nav-link.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+
+        .nav-link svg {
+            width: 20px;
+            height: 20px;
+            opacity: 0.7;
+        }
+
+        .nav-link.active svg {
+            opacity: 1;
+            filter: drop-shadow(0 0 5px var(--primary));
+        }
+
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--danger);
+            box-shadow: 0 0 5px var(--danger);
+        }
+
+        .dot.online {
+            background: var(--success);
+            box-shadow: 0 0 5px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* Main Content Styling */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-deep);
+            overflow: hidden;
+            position: relative;
+        }
+
         header {
+            height: 70px;
+            padding: 0 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 2rem;
-            background-color: var(--bg-card);
             border-bottom: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: 10;
         }
-        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
-        .header-actions { display: flex; gap: 1rem; align-items: center; }
-        .status-pill {
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
-            background: rgba(16, 185, 129, 0.2);
-            color: var(--success);
+
+        .header-title {
+            font-size: 1.1rem;
+            font-weight: 600;
         }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* UI Elements */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .grid { display: grid; gap: 1.5rem; }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
         button {
             background-color: var(--primary);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 0.375rem;
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
             cursor: pointer;
-            font-weight: 500;
+            font-weight: 600;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
-        button:hover { opacity: 0.9; }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
         .btn-danger { background-color: var(--danger); }
         .btn-success { background-color: var(--success); }
-        
-        /* Tabs Navigation */
-        .tabs {
-            display: flex;
-            padding: 0 2rem;
-            background-color: var(--bg-card);
-            border-bottom: 1px solid var(--border);
-        }
-        .tab-btn {
-            background: none;
-            color: var(--text-muted);
-            padding: 1rem;
-            border-bottom: 2px solid transparent;
-            border-radius: 0;
-        }
-        .tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-        
-        /* Main Content */
-        main {
-            flex: 1;
-            padding: 2rem;
-            overflow-y: auto;
-        }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        /* Cards & Grid */
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-        .card {
-            background-color: var(--bg-card);
-            border-radius: 0.5rem;
-            padding: 1.5rem;
+
+        select, input {
+            background: var(--bg-deep);
             border: 1px solid var(--border);
-        }
-        
-        /* Live Tab Styles */
-        .live-status-empty { text-align: center; padding: 4rem; color: var(--text-muted); }
-        #liveCallActive { display: none; }
-        .badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-            font-weight: bold;
-            background: var(--border);
-        }
-        .badge.pass { background: rgba(16, 185, 129, 0.2); color: var(--success); }
-        .badge.fail { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
-        .badge.warn { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
-        
-        .transcript-box {
-            height: 300px;
-            overflow-y: auto;
-            background: #0f172a;
-            padding: 1rem;
+            color: var(--text-main);
+            padding: 0.625rem;
             border-radius: 0.5rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Custom UI Components */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .badge.pass { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+        .badge.fail { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .badge.warn { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+
+        .risk-meter {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 0.75rem;
+        }
+
+        .risk-fill {
+            height: 100%;
+            width: 0%;
+            background: var(--success);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+        }
+
+        .transcript-box {
+            height: 450px;
+            overflow-y: auto;
+            background: rgba(2, 6, 23, 0.5);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
             border: 1px solid var(--border);
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
         }
-        .msg { max-width: 80%; padding: 0.75rem; border-radius: 0.5rem; }
-        .msg.ai { background: rgba(59, 130, 246, 0.2); align-self: flex-start; border-bottom-left-radius: 0; }
-        .msg.caller { background: rgba(168, 85, 247, 0.2); align-self: flex-end; border-bottom-right-radius: 0; }
-        
-        .risk-meter { height: 1rem; background: var(--border); border-radius: 999px; overflow: hidden; margin-top: 0.5rem; }
-        .risk-fill { height: 100%; width: 0%; background: var(--success); transition: width 0.3s ease, background 0.3s ease; }
-        
-        /* Table Styles */
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); }
-        th { color: var(--text-muted); font-size: 0.875rem; }
-        
-        /* Settings Styles */
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); }
-        input, select {
-            width: 100%; padding: 0.5rem; border-radius: 0.25rem;
-            background: var(--bg-dark); color: var(--text-main);
-            border: 1px solid var(--border);
+
+        .msg {
+            max-width: 85%;
+            padding: 0.875rem 1rem;
+            border-radius: 1rem;
+            font-size: 0.9375rem;
+            line-height: 1.5;
+            position: relative;
         }
-        .toggle { display: flex; align-items: center; gap: 0.5rem; }
+
+        .msg.ai {
+            background: var(--primary);
+            color: white;
+            align-self: flex-start;
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .msg.caller {
+            background: rgba(168, 85, 247, 0.2);
+            color: #d8b4fe;
+            align-self: flex-end;
+            border-bottom-right-radius: 0.25rem;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        th {
+            text-align: left;
+            padding: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.8125rem;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+        }
+        td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: 0.9375rem; }
+        tr:last-child td { border-bottom: none; }
+
+        .live-status-empty {
+            text-align: center;
+            padding: 6rem 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+        }
+
+        .live-status-empty h2 { color: var(--text-main); margin-bottom: 0.5rem; }
+        .live-status-empty svg { width: 64px; height: 64px; margin-bottom: 1.5rem; opacity: 0.2; }
+
     </style>
 </head>
 <body>
 
-    <header>
-        <div class="logo">ShieldCall AI</div>
-        <div class="header-actions">
-            <button id="btnAudioToggle" onclick="toggleAudio()" style="background:var(--border);">🔊 Audio: OFF</button>
-            <div class="status-pill" id="wsStatus">WS Connecting...</div>
-            <select id="simProfileSelect">
-                <option value="">Random Caller</option>
-            </select>
-            <button onclick="triggerSimulation()">Simulate Call</button>
+    <aside>
+        <div class="sidebar-header">
+            <div class="logo-icon">S</div>
+            <div class="logo-text">ShieldCall AI</div>
         </div>
-    </header>
 
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('live')">Live Call</button>
-        <button class="tab-btn" onclick="switchTab('recent')">Recent Calls</button>
-        <button class="tab-btn" onclick="switchTab('scan')">Voice Scanner</button>
-        <button class="tab-btn" onclick="switchTab('analytics')">Analytics</button>
-        <button class="tab-btn" onclick="switchTab('settings')">Settings</button>
-    </div>
+        <nav>
+            <button class="nav-link active" data-tab="live" onclick="switchTab('live')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                Live Call
+            </button>
+            <button class="nav-link" data-tab="recent" onclick="switchTab('recent')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M9 20v-10M15 20v-2M3 20V4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v16"></path></svg>
+                Recent Calls
+            </button>
+            <button class="nav-link" data-tab="scan" onclick="switchTab('scan')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                Voice Scanner
+            </button>
+            <button class="nav-link" data-tab="analytics" onclick="switchTab('analytics')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                Analytics
+            </button>
+            <button class="nav-link" data-tab="settings" onclick="switchTab('settings')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                Settings
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="status-indicator">
+                <div id="wsStatusDot" class="dot"></div>
+                <span id="wsStatusText">Connecting...</span>
+            </div>
+        </div>
+    </aside>
 
     <main>
-        <!-- LIVE TAB -->
-        <div id="tab-live" class="tab-content active">
-            <div id="liveCallEmpty" class="live-status-empty">
-                <h2>No Active Call</h2>
-                <p>Waiting for incoming call...</p>
-                <button onclick="triggerSimulation()" style="margin-top: 1rem;">Trigger Simulation</button>
-            </div>
-            
-            <div id="liveCallActive" class="grid-2">
-                <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-                    <div class="card">
-                        <h3 style="margin-top:0" id="liveCallerName">Unknown Caller</h3>
-                        <p style="color:var(--text-muted)" id="liveCallerNumber">+91 0000000000</p>
-                        <span class="badge" id="liveLangBadge">English</span>
-                        
-                        <div style="margin-top: 1.5rem;">
-                            <div style="display: flex; justify-content: space-between;">
-                                <span>Risk Score</span>
-                                <span id="liveRiskScoreText">0/100</span>
-                            </div>
-                            <div class="risk-meter">
-                                <div class="risk-fill" id="liveRiskFill"></div>
-                            </div>
-                            <div id="liveRiskSignals" style="font-size: 0.8rem; color: var(--warning); margin-top: 0.5rem;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <h3 style="margin-top:0">Authentication Checks</h3>
-                        <div class="grid-2">
-                            <div>Contact: <span class="badge" id="chkContact">Checking...</span></div>
-                            <div>Scam DB: <span class="badge" id="chkScam">Checking...</span></div>
-                            <div>Spoofing: <span class="badge" id="chkSpoofing">Checking...</span></div>
-                            <div>Urgency: <span class="badge" id="chkUrgency">Checking...</span></div>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <h3 style="margin-top:0">Actions</h3>
-                        <div style="display:flex; gap: 1rem;" id="actionButtonsArea">
-                            <button class="btn-danger" onclick="takeAction('blocked')">Block Now</button>
-                            <button class="btn-success" onclick="takeAction('forwarded')">Forward to Me</button>
-                        </div>
-                        <div id="decisionBanner" style="display:none; padding:1rem; border-radius:0.5rem; margin-top:1rem; font-weight:bold;"></div>
-                    </div>
-                </div>
-                
-                <div class="card" style="display: flex; flex-direction: column;">
-                    <h3 style="margin-top:0">Live Transcript</h3>
-                    <div class="transcript-box" id="transcriptBox"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- RECENT CALLS TAB -->
-        <div id="tab-recent" class="tab-content">
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                    <h2 style="margin:0">Call History</h2>
-                    <button onclick="loadCalls()">Refresh</button>
-                </div>
-                <table id="callsTable">
-                    <thead>
-                        <tr>
-                            <th>Caller</th>
-                            <th>Number</th>
-                            <th>Date</th>
-                            <th>Intent</th>
-                            <th>Risk</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- VOICE SCAN TAB -->
-        <div id="tab-scan" class="tab-content">
-            <div class="card" style="text-align: center; padding: 3rem 1rem;">
-                <h2 style="margin-top:0">Manual Voice Scanner</h2>
-                <p style="color:var(--text-muted); margin-bottom: 2rem;">Speak into your microphone to manually check for scam or urgency indicators.</p>
-                
-                <button id="btnScanVoice" onclick="toggleVoiceScan()" style="padding: 1rem 2rem; font-size: 1.25rem; border-radius: 9999px; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background-color: var(--primary);">
-                    <span id="scanVoiceIcon">🎙️</span>
-                    <span id="scanVoiceText">Start Listening</span>
+        <header>
+            <div class="header-title" id="currentTabTitle">Live Call</div>
+            <div class="header-actions">
+                <button id="btnAudioToggle" class="btn-secondary" onclick="toggleAudio()">
+                    <span id="audioIcon">🔇</span> Audio: OFF
                 </button>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select id="simProfileSelect" style="max-width: 150px;">
+                        <option value="">Random Caller</option>
+                    </select>
+                    <button onclick="triggerSimulation()">Simulate Call</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-area">
+            <!-- LIVE TAB -->
+            <div id="tab-live" class="tab-content active">
+                <div id="liveCallEmpty" class="live-status-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    <h2>No Active Call</h2>
+                    <p>Waiting for incoming calls to scan...</p>
+                    <button onclick="triggerSimulation()" style="margin-top: 1.5rem;">Trigger Simulation</button>
+                </div>
                 
-                <div style="margin-top: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; text-align: left;">
-                    <div id="scanLiveTranscript" style="min-height: 80px; padding: 1rem; background: var(--bg-dark); border: 1px solid var(--border); border-radius: 0.5rem; margin-bottom: 1.5rem; color: var(--text-muted);">
-                        Transcript will appear here...
+                <div id="liveCallActive" class="grid grid-2" style="display: none;">
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div class="card">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                <div>
+                                    <h3 style="margin: 0; font-size: 1.5rem;" id="liveCallerName">Unknown Caller</h3>
+                                    <p style="color:var(--text-muted); margin: 0.25rem 0;" id="liveCallerNumber">+91 0000000000</p>
+                                </div>
+                                <span class="badge" id="liveLangBadge">English</span>
+                            </div>
+                            
+                            <div style="margin-top: 1.5rem;">
+                                <div style="display: flex; justify-content: space-between; font-size: 0.875rem; font-weight: 500;">
+                                    <span>AI Risk Assessment</span>
+                                    <span id="liveRiskScoreText">0/100</span>
+                                </div>
+                                <div class="risk-meter">
+                                    <div class="risk-fill" id="liveRiskFill"></div>
+                                </div>
+                                <div id="liveRiskSignals" style="font-size: 0.8125rem; color: var(--warning); margin-top: 0.75rem; line-height: 1.4;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1rem;">Authentication Protocol</h3>
+                            <div class="grid grid-2" style="gap: 1rem;">
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Contact Match</span>
+                                    <span class="badge" id="chkContact">Checking...</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Scam Database</span>
+                                    <span class="badge" id="chkScam">Checking...</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Spoofing Check</span>
+                                    <span class="badge" id="chkSpoofing">Checking...</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Urgency Analysis</span>
+                                    <span class="badge" id="chkUrgency">Checking...</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1rem;">Protocol Actions</h3>
+                            <div style="display:flex; gap: 1rem;" id="actionButtonsArea">
+                                <button class="btn-danger" style="flex: 1;" onclick="takeAction('blocked')">Terminate & Block</button>
+                                <button class="btn-success" style="flex: 1;" onclick="takeAction('forwarded')">Forward Call</button>
+                            </div>
+                            <div id="decisionBanner" style="display:none; padding:1.25rem; border-radius:0.75rem; margin-top:1rem; font-weight:600; text-align: center;"></div>
+                        </div>
                     </div>
                     
-                    <div id="scanResults" style="display: none;" class="card">
-                        <h3 style="margin-top:0">Scan Results</h3>
-                        <div class="grid-2" style="margin-bottom: 1rem;">
-                            <div>Risk Score: <span class="badge" id="scanRiskBadge">0/100</span></div>
-                            <div>Scam Status: <span class="badge" id="scanScamBadge">Clean</span></div>
+                    <div class="card" style="display: flex; flex-direction: column;">
+                        <h3 style="margin-top: 0; margin-bottom: 1rem; font-size: 1rem;">Live Transcript</h3>
+                        <div class="transcript-box" id="transcriptBox"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECENT CALLS TAB -->
+            <div id="tab-recent" class="tab-content">
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="margin: 0; font-size: 1.25rem;">Call History Analysis</h2>
+                        <button class="btn-secondary" onclick="loadCalls()">Refresh History</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table id="callsTable">
+                            <thead>
+                                <tr>
+                                    <th>Caller Identity</th>
+                                    <th>Phone Number</th>
+                                    <th>Timestamp</th>
+                                    <th>Intent Label</th>
+                                    <th>Risk</th>
+                                    <th>Action Outcome</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VOICE SCAN TAB -->
+            <div id="tab-scan" class="tab-content">
+                <div class="card" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem 1.5rem;">
+                    <div style="margin-bottom: 2rem;">
+                        <h2 style="margin: 0; font-size: 1.5rem;">Manual Audio Forensics</h2>
+                        <p style="color:var(--text-muted); margin-top: 0.5rem;">Analyze real-time audio streams for scam patterns and urgency vectors.</p>
+                    </div>
+                    
+                    <button id="btnScanVoice" onclick="toggleVoiceScan()" style="padding: 1.25rem 2.5rem; font-size: 1.1rem; border-radius: 9999px; width: 300px; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);">
+                        <span id="scanVoiceIcon">🎙️</span>
+                        <span id="scanVoiceText">Initialize Listening</span>
+                    </button>
+                    
+                    <div style="margin-top: 3rem; text-align: left;">
+                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Real-time Transcription</div>
+                        <div id="scanLiveTranscript" style="min-height: 100px; padding: 1.5rem; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 1rem; margin-bottom: 1.5rem; color: var(--text-muted); font-size: 1.1rem; line-height: 1.6;">
+                            Voice engine ready...
                         </div>
-                        <div style="font-size: 0.875rem; color: var(--warning);" id="scanSignalsList"></div>
+                        
+                        <div id="scanResults" style="display: none;" class="card">
+                            <h3 style="margin-top: 0; margin-bottom: 1rem;">Forensic Analysis</h3>
+                            <div class="grid grid-2" style="margin-bottom: 1.5rem;">
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Cumulative Risk</span>
+                                    <span class="badge" id="scanRiskBadge">0/100</span>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Threat Status</span>
+                                    <span class="badge" id="scanScamBadge">Clean</span>
+                                </div>
+                            </div>
+                            <div id="scanSignalsList" style="font-size: 0.9375rem; color: var(--warning); padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 0.5rem;"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- ANALYTICS TAB -->
-        <div id="tab-analytics" class="tab-content">
-            <div class="grid-4" style="margin-bottom: 1.5rem;">
-                <div class="card">
-                    <h4 style="margin:0; color:var(--text-muted)">Total Screened</h4>
-                    <h2 style="margin:0.5rem 0 0 0" id="statTotal">0</h2>
+            <!-- ANALYTICS TAB -->
+            <div id="tab-analytics" class="tab-content">
+                <div class="grid grid-4" style="margin-bottom: 1.5rem;">
+                    <div class="card" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                        <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Total Screened</span>
+                        <h2 style="font-size: 2rem; margin: 0.5rem 0;" id="statTotal">0</h2>
+                    </div>
+                    <div class="card" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                        <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Forwarded</span>
+                        <h2 style="font-size: 2rem; margin: 0.5rem 0; color: var(--success);" id="statForwarded">0</h2>
+                    </div>
+                    <div class="card" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                        <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Blocked</span>
+                        <h2 style="font-size: 2rem; margin: 0.5rem 0; color: var(--danger);" id="statBlocked">0</h2>
+                    </div>
+                    <div class="card" style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                        <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Security Level</span>
+                        <h2 style="font-size: 2rem; margin: 0.5rem 0;" id="statBlockRate">0%</h2>
+                    </div>
                 </div>
-                <div class="card">
-                    <h4 style="margin:0; color:var(--text-muted)">Forwarded</h4>
-                    <h2 style="margin:0.5rem 0 0 0; color:var(--success)" id="statForwarded">0</h2>
-                </div>
-                <div class="card">
-                    <h4 style="margin:0; color:var(--text-muted)">Blocked</h4>
-                    <h2 style="margin:0.5rem 0 0 0; color:var(--danger)" id="statBlocked">0</h2>
-                </div>
-                <div class="card">
-                    <h4 style="margin:0; color:var(--text-muted)">Block Rate</h4>
-                    <h2 style="margin:0.5rem 0 0 0" id="statBlockRate">0%</h2>
+                
+                <div class="grid grid-2">
+                    <div class="card">
+                        <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1rem;">Call Intent Distribution</h3>
+                        <div style="height: 300px; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="intentChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1rem;">Language Profile</h3>
+                        <div style="height: 300px; display: flex; align-items: center; justify-content: center;">
+                            <canvas id="langChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
-            
-            <div class="grid-2">
-                <div class="card">
-                    <canvas id="intentChart"></canvas>
-                </div>
-                <div class="card">
-                    <canvas id="langChart"></canvas>
-                </div>
-            </div>
-        </div>
 
-        <!-- SETTINGS TAB -->
-        <div id="tab-settings" class="tab-content">
-            <div class="grid-2">
-                <div class="card">
-                    <h2 style="margin-top:0">System Status</h2>
-                    <p id="ollamaStatus">Checking Ollama...</p>
-                </div>
-                <div class="card">
-                    <h2 style="margin-top:0">Demo Contacts</h2>
-                    <p>Seed data has loaded 10 contacts automatically.</p>
-                </div>
-                <div class="card">
-                    <h2 style="margin-top:0">Voice Settings (TTS)</h2>
-                    <div class="form-group">
-                        <label>AI Voice</label>
-                        <select id="ttsVoiceSelect"></select>
+            <!-- SETTINGS TAB -->
+            <div id="tab-settings" class="tab-content">
+                <div class="grid grid-2">
+                    <div class="card">
+                        <h2 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem;">Core Engine Status</h2>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 0.75rem;">
+                            <span>Ollama Backend</span>
+                            <span id="ollamaStatus" style="font-weight: 600;">Checking...</span>
+                        </div>
+                        <p style="font-size: 0.8125rem; color: var(--text-muted); margin-top: 1rem;">The system uses Ollama for local NLP and intent analysis. Ensure the service is running for full functionality.</p>
                     </div>
-                    <div class="form-group">
-                        <label>Pitch: <span id="pitchVal">1.2</span></label>
-                        <input type="range" id="ttsPitch" min="0.5" max="2" step="0.1" value="1.2" oninput="document.getElementById('pitchVal').textContent=this.value">
-                    </div>
-                    <div class="form-group">
-                        <label>Speed (Rate): <span id="rateVal">1.0</span></label>
-                        <input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1.0" oninput="document.getElementById('rateVal').textContent=this.value">
+                    <div class="card">
+                        <h2 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem;">Voice Synthesis Engine</h2>
+                        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <label style="font-size: 0.875rem; color: var(--text-muted);">Preferred AI Voice</label>
+                                <select id="ttsVoiceSelect"></select>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <label style="font-size: 0.875rem; color: var(--text-muted);">Vocal Pitch</label>
+                                    <span id="pitchVal" style="font-weight: 600; color: var(--primary);">1.2</span>
+                                </div>
+                                <input type="range" id="ttsPitch" min="0.5" max="2" step="0.1" value="1.2" oninput="document.getElementById('pitchVal').textContent=this.value">
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <label style="font-size: 0.875rem; color: var(--text-muted);">Vocal Velocity</label>
+                                    <span id="rateVal" style="font-weight: 600; color: var(--primary);">1.0</span>
+                                </div>
+                                <input type="range" id="ttsRate" min="0.5" max="2" step="0.1" value="1.0" oninput="document.getElementById('rateVal').textContent=this.value">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -335,13 +649,31 @@
     </main>
 
     <script>
-        // Tab logic
+        // Tab mapping for header title
+        const tabTitles = {
+            'live': 'Live Call Intelligence',
+            'recent': 'Recent Call Records',
+            'scan': 'Audio Forensic Scan',
+            'analytics': 'System Analytics',
+            'settings': 'Engine Settings'
+        };
+
+        // Refactored Tab Switch logic
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(`tab-${tabId}`).classList.add('active');
+            // Update Sidebar UI
+            document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+            const activeBtn = document.querySelector(`.nav-link[data-tab="${tabId}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
             
+            // Update Content UI
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            const activeContent = document.getElementById(`tab-${tabId}`);
+            if (activeContent) activeContent.classList.add('active');
+            
+            // Update Header Title
+            document.getElementById('currentTabTitle').textContent = tabTitles[tabId] || 'ShieldCall';
+            
+            // Load Tab-specific data
             if (tabId === 'recent') loadCalls();
             if (tabId === 'analytics') loadAnalytics();
         }
@@ -351,27 +683,24 @@
         let isAudioEnabled = false;
         
         const langMap = {
-            "Tamil": "ta-IN",
-            "Hindi": "hi-IN",
-            "Telugu": "te-IN",
-            "Kannada": "kn-IN",
-            "Malayalam": "ml-IN",
-            "Bengali": "bn-IN",
-            "Marathi": "mr-IN",
-            "Gujarati": "gu-IN",
-            "Punjabi": "pa-IN",
+            "Tamil": "ta-IN", "Hindi": "hi-IN", "Telugu": "te-IN",
+            "Kannada": "kn-IN", "Malayalam": "ml-IN", "Bengali": "bn-IN",
+            "Marathi": "mr-IN", "Gujarati": "gu-IN", "Punjabi": "pa-IN",
             "English": "en-US"
         };
 
         function toggleAudio() {
             isAudioEnabled = !isAudioEnabled;
             const btn = document.getElementById('btnAudioToggle');
+            const icon = document.getElementById('audioIcon');
             if (isAudioEnabled) {
-                btn.textContent = "🔊 Audio: ON";
-                btn.style.background = "var(--success)";
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-success');
+                btn.innerHTML = `<span>🔊</span> Audio: ON`;
             } else {
-                btn.textContent = "🔊 Audio: OFF";
-                btn.style.background = "var(--border)";
+                btn.classList.remove('btn-success');
+                btn.classList.add('btn-secondary');
+                btn.innerHTML = `<span>🔇</span> Audio: OFF`;
                 if ('speechSynthesis' in window) window.speechSynthesis.cancel();
             }
         }
@@ -398,23 +727,16 @@
             if (!isAudioEnabled) return;
             if ('speechSynthesis' in window) {
                 const utterance = new SpeechSynthesisUtterance(text);
-                
                 const voiceIdx = document.getElementById('ttsVoiceSelect').value;
                 if (voices.length > 0 && voiceIdx !== "") {
                     utterance.voice = voices[voiceIdx];
                 } else {
                     utterance.lang = langMap[langName] || "en-US";
                 }
-                
                 const pitch = parseFloat(document.getElementById('ttsPitch').value);
                 const rate = parseFloat(document.getElementById('ttsRate').value);
-                
                 utterance.rate = rate;
-                if (role === 'ai') {
-                    utterance.pitch = pitch;
-                } else {
-                    utterance.pitch = Math.max(0.5, pitch - 0.2);
-                }
+                utterance.pitch = (role === 'ai') ? pitch : Math.max(0.5, pitch - 0.2);
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -427,37 +749,28 @@
         function connectWS() {
             ws = new WebSocket(wsUrl);
             ws.onopen = () => {
-                const el = document.getElementById('wsStatus');
-                el.textContent = "Live Stream Connected";
-                el.style.background = "rgba(16, 185, 129, 0.2)";
-                el.style.color = "var(--success)";
+                const dot = document.getElementById('wsStatusDot');
+                const text = document.getElementById('wsStatusText');
+                dot.className = "dot online";
+                text.textContent = "Live Stream Connected";
+                text.style.color = "var(--success)";
             };
             ws.onmessage = (e) => {
                 const msg = JSON.parse(e.data);
                 handleEvent(msg.event, msg.data);
             };
             ws.onclose = () => {
-                const el = document.getElementById('wsStatus');
-                el.textContent = "Disconnected - Reconnecting...";
-                el.style.background = "rgba(239, 68, 68, 0.2)";
-                el.style.color = "var(--danger)";
+                const dot = document.getElementById('wsStatusDot');
+                const text = document.getElementById('wsStatusText');
+                dot.className = "dot";
+                text.textContent = "Disconnected - Reconnecting...";
+                text.style.color = "var(--danger)";
                 setTimeout(connectWS, 3000);
             };
         }
         connectWS();
 
-        // Load Profiles
-        fetch('/api/simulate/profiles').then(r => r.json()).then(data => {
-            const select = document.getElementById('simProfileSelect');
-            data.profiles.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                opt.textContent = `${p.name} (${p.risk_hint})`;
-                select.appendChild(opt);
-            });
-        });
-
-        // Event Handlers
+        // Simulation
         function triggerSimulation() {
             const profileId = document.getElementById('simProfileSelect').value;
             const payload = profileId ? { profile_id: parseInt(profileId) } : {};
@@ -466,14 +779,18 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             }).then(r => {
-                if(!r.ok) alert("Simulation already running or error");
-                else switchTab('live');
+                if(!r.ok) {
+                    console.error("Simulation error");
+                    // Still switch to live tab if it's already running
+                    switchTab('live');
+                } else {
+                    switchTab('live');
+                }
             });
         }
 
+        // Event Handlers
         function handleEvent(event, data) {
-            console.log(event, data);
-            
             if (event === 'call_started') {
                 document.getElementById('liveCallEmpty').style.display = 'none';
                 document.getElementById('liveCallActive').style.display = 'grid';
@@ -492,6 +809,8 @@
                     el.textContent = "Checking...";
                     el.className = "badge";
                 });
+                // Auto switch to live tab if not already there
+                switchTab('live');
             }
             
             if (event === 'transcript_line') {
@@ -501,7 +820,6 @@
                 div.textContent = data.text;
                 box.appendChild(div);
                 box.scrollTop = box.scrollHeight;
-                
                 const currentLang = document.getElementById('liveLangBadge').textContent || "English";
                 speakText(data.text, currentLang, data.role);
             }
@@ -511,16 +829,15 @@
             }
             
             if (event === 'check_update') {
-                const map = {
-                    'contact': 'chkContact', 'scam': 'chkScam', 
-                    'spoofing': 'chkSpoofing', 'urgency': 'chkUrgency'
-                };
+                const map = { 'contact': 'chkContact', 'scam': 'chkScam', 'spoofing': 'chkSpoofing', 'urgency': 'chkUrgency' };
                 const el = document.getElementById(map[data.check_name]);
-                el.textContent = data.status.toUpperCase();
-                el.className = "badge";
-                if (['verified', 'clean', 'genuine', 'clear'].includes(data.status)) el.classList.add('pass');
-                else if (['scam', 'spoofed', 'flagged'].includes(data.status)) el.classList.add('fail');
-                else el.classList.add('warn');
+                if (el) {
+                    el.textContent = data.status.toUpperCase();
+                    el.className = "badge";
+                    if (['verified', 'clean', 'genuine', 'clear'].includes(data.status)) el.classList.add('pass');
+                    else if (['scam', 'spoofed', 'flagged'].includes(data.status)) el.classList.add('fail');
+                    else el.classList.add('warn');
+                }
             }
             
             if (event === 'risk_update') {
@@ -530,8 +847,7 @@
                 if (data.score < 40) fill.style.background = 'var(--success)';
                 else if (data.score < 70) fill.style.background = 'var(--warning)';
                 else fill.style.background = 'var(--danger)';
-                
-                document.getElementById('liveRiskSignals').innerHTML = data.signals.join('<br>');
+                document.getElementById('liveRiskSignals').innerHTML = data.signals.map(s => `• ${s}`).join('<br>');
             }
             
             if (event === 'decision') {
@@ -542,9 +858,11 @@
                 if (data.action === 'forwarded') {
                     banner.style.background = 'rgba(16, 185, 129, 0.2)';
                     banner.style.color = 'var(--success)';
+                    banner.style.border = '1px solid var(--success)';
                 } else {
                     banner.style.background = 'rgba(239, 68, 68, 0.2)';
                     banner.style.color = 'var(--danger)';
+                    banner.style.border = '1px solid var(--danger)';
                 }
             }
             
@@ -555,143 +873,70 @@
             }
         }
 
-        // Voice Scan Logic
+        // Profile Loading
+        fetch('/api/simulate/profiles').then(r => r.json()).then(data => {
+            const select = document.getElementById('simProfileSelect');
+            data.profiles.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.name;
+                select.appendChild(opt);
+            });
+        });
+
+        // Speech Recognition for Voice Scan
         let recognition;
         let isRecording = false;
-        let manualStop = true;
-        
-        function initSpeechRecognition() {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert("Your browser does not support Speech Recognition. Please use Chrome or Edge.");
-                return false;
-            }
-            
-            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRec();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            
-            recognition.onstart = () => {
-                isRecording = true;
-                document.getElementById('scanVoiceText').textContent = "Listening... (Click to Stop)";
-                document.getElementById('btnScanVoice').style.backgroundColor = 'var(--danger)';
-                document.getElementById('scanLiveTranscript').style.color = "var(--text-main)";
-            };
-
-            recognition.onerror = (event) => {
-                console.error("Speech recognition error:", event.error);
-                isRecording = false;
-                manualStop = true; // prevent restart loop on error
-                document.getElementById('scanVoiceText').textContent = "Mic Error: " + event.error;
-                document.getElementById('btnScanVoice').style.backgroundColor = 'var(--warning)';
-            };
-            
-            recognition.onresult = (event) => {
-                let interimTranscript = '';
-                let finalTranscript = '';
-                
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
-                    }
-                }
-                
-                // Only update text if we have something
-                if (finalTranscript || interimTranscript) {
-                    document.getElementById('scanLiveTranscript').textContent = finalTranscript + interimTranscript;
-                }
-            };
-            
-            recognition.onend = () => {
-                isRecording = false;
-                
-                const finalStr = document.getElementById('scanLiveTranscript').textContent.trim();
-                // If there's valid text that isn't the placeholder, analyze it
-                if (finalStr.length > 0 && !finalStr.includes("Transcript will appear here")) {
-                    analyzeVoiceText(finalStr);
-                    // Clear the transcript for the next continuous sentence
-                    document.getElementById('scanLiveTranscript').textContent = "..."; 
-                }
-                
-                if (!manualStop) {
-                    // Automatically restart if not manually stopped
-                    try { recognition.start(); } catch(e) { console.error(e); }
-                } else {
-                    document.getElementById('scanVoiceText').textContent = "Start Listening";
-                    document.getElementById('btnScanVoice').style.backgroundColor = 'var(--primary)';
-                }
-            };
-            
-            return true;
-        }
-        
         function toggleVoiceScan() {
             if (!recognition) {
-                if (!initSpeechRecognition()) return;
+                const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRec) { alert("Speech Recognition not supported"); return; }
+                recognition = new SpeechRec();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.onstart = () => {
+                    isRecording = true;
+                    document.getElementById('scanVoiceText').textContent = "Listening...";
+                    document.getElementById('btnScanVoice').style.background = 'var(--danger)';
+                };
+                recognition.onend = () => {
+                    isRecording = false;
+                    document.getElementById('scanVoiceText').textContent = "Initialize Listening";
+                    document.getElementById('btnScanVoice').style.background = 'var(--primary)';
+                };
+                recognition.onresult = (e) => {
+                    let text = '';
+                    for (let i = e.resultIndex; i < e.results.length; ++i) {
+                        text += e.results[i][0].transcript;
+                    }
+                    document.getElementById('scanLiveTranscript').textContent = text;
+                    if (e.results[e.results.length-1].isFinal) analyzeVoiceText(text);
+                };
             }
-            
-            if (isRecording) {
-                manualStop = true;
-                recognition.stop();
-            } else {
-                manualStop = false;
-                document.getElementById('scanLiveTranscript').textContent = "";
-                document.getElementById('scanResults').style.display = "none";
-                try {
-                    recognition.start();
-                } catch(e) {
-                    console.error("Already recording", e);
-                }
+            if (isRecording) recognition.stop();
+            else {
+                document.getElementById('scanLiveTranscript').textContent = "...";
+                recognition.start();
             }
         }
-        
+
         function analyzeVoiceText(text) {
             fetch('/api/scan-text', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: text })
-            })
-            .then(r => r.json())
-            .then(data => {
+            }).then(r => r.json()).then(data => {
                 document.getElementById('scanResults').style.display = 'block';
-                
                 const riskBadge = document.getElementById('scanRiskBadge');
                 riskBadge.textContent = `${data.risk_score}/100`;
                 riskBadge.className = 'badge ' + (data.risk_score < 40 ? 'pass' : data.risk_score < 70 ? 'warn' : 'fail');
-                
                 const scamBadge = document.getElementById('scanScamBadge');
                 scamBadge.textContent = data.scam_status.toUpperCase();
                 scamBadge.className = 'badge ' + (data.scam_status === 'clean' ? 'pass' : 'fail');
-                
-                const signalsDiv = document.getElementById('scanSignalsList');
-                if (data.signals && data.signals.length > 0) {
-                    signalsDiv.innerHTML = '<strong>Detected Signals:</strong><br>' + data.signals.map(s => `• ${s}`).join('<br>');
-                } else {
-                    signalsDiv.innerHTML = '<span style="color:var(--success)">No suspicious signals detected.</span>';
-                }
-                
-                // Speak the AI reply automatically
-                if ('speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance(data.ai_reply);
-                    
-                    const voiceIdx = document.getElementById('ttsVoiceSelect').value;
-                    if (voices.length > 0 && voiceIdx !== "") {
-                        utterance.voice = voices[voiceIdx];
-                    } else {
-                        utterance.lang = langMap[data.detected_language] || "en-US";
-                    }
-                    
-                    utterance.pitch = parseFloat(document.getElementById('ttsPitch').value);
-                    utterance.rate = parseFloat(document.getElementById('ttsRate').value);
-                    window.speechSynthesis.speak(utterance);
-                }
-            })
-            .catch(e => console.error("Error analyzing text", e));
+                document.getElementById('scanSignalsList').innerHTML = data.signals.map(s => `• ${s}`).join('<br>');
+            });
         }
 
-        // Action override
         function takeAction(action) {
             if (!currentCallId) return;
             fetch(`/api/calls/${currentCallId}/action`, {
@@ -702,13 +947,12 @@
                 document.getElementById('actionButtonsArea').style.display = 'none';
                 const banner = document.getElementById('decisionBanner');
                 banner.style.display = 'block';
-                banner.textContent = `Manually ${action}`;
+                banner.textContent = `MANUAL OVERRIDE: ${action.toUpperCase()}`;
                 banner.style.background = action === 'forwarded' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)';
                 banner.style.color = action === 'forwarded' ? 'var(--success)' : 'var(--danger)';
             });
         }
 
-        // Recent Calls Tab
         function loadCalls() {
             fetch('/api/calls').then(r => r.json()).then(data => {
                 const tbody = document.querySelector('#callsTable tbody');
@@ -716,21 +960,19 @@
                 data.calls.forEach(c => {
                     const tr = document.createElement('tr');
                     const d = new Date(c.created_at).toLocaleString();
-                    const actionColor = c.action_taken === 'forwarded' ? 'var(--success)' : 'var(--danger)';
                     tr.innerHTML = `
                         <td><strong>${c.caller_name}</strong></td>
                         <td>${c.caller_number}</td>
                         <td>${d}</td>
                         <td><span class="badge">${c.intent_label}</span></td>
-                        <td>${c.risk_score}</td>
-                        <td style="color:${actionColor}; font-weight:bold">${c.action_taken.toUpperCase()}</td>
+                        <td><span class="badge ${c.risk_score < 40 ? 'pass' : c.risk_score < 70 ? 'warn' : 'fail'}">${c.risk_score}</span></td>
+                        <td style="color:${c.action_taken === 'forwarded' ? 'var(--success)' : 'var(--danger)'}; font-weight:700">${c.action_taken.toUpperCase()}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             });
         }
 
-        // Analytics Tab
         let intentChartInst, langChartInst;
         function loadAnalytics() {
             fetch('/api/stats').then(r => r.json()).then(data => {
@@ -739,7 +981,6 @@
                 document.getElementById('statBlocked').textContent = data.blocked;
                 document.getElementById('statBlockRate').textContent = data.block_rate + '%';
                 
-                // Intent Chart
                 const ctx1 = document.getElementById('intentChart').getContext('2d');
                 if (intentChartInst) intentChartInst.destroy();
                 intentChartInst = new Chart(ctx1, {
@@ -747,15 +988,22 @@
                     data: {
                         labels: Object.keys(data.intent_breakdown),
                         datasets: [{
-                            label: 'Calls by Intent',
                             data: Object.values(data.intent_breakdown),
-                            backgroundColor: '#3b82f6'
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 6
                         }]
                     },
-                    options: { responsive: true, plugins: { legend: { display: false } } }
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { 
+                            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                        }
+                    }
                 });
                 
-                // Lang Chart
                 const ctx2 = document.getElementById('langChart').getContext('2d');
                 if (langChartInst) langChartInst.destroy();
                 langChartInst = new Chart(ctx2, {
@@ -764,20 +1012,24 @@
                         labels: Object.keys(data.language_breakdown),
                         datasets: [{
                             data: Object.values(data.language_breakdown),
-                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+                            backgroundColor: ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444'],
+                            borderWidth: 0
                         }]
                     },
-                    options: { responsive: true }
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 20 } } },
+                        cutout: '70%'
+                    }
                 });
             });
         }
         
-        // Status Check
         fetch('/api/ollama/status').then(r => r.json()).then(data => {
             const el = document.getElementById('ollamaStatus');
             el.textContent = data.status;
-            if (data.available) el.style.color = "var(--success)";
-            else el.style.color = "var(--warning)";
+            el.style.color = data.available ? "var(--success)" : "var(--warning)";
         });
 
     </script>
