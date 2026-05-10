@@ -125,6 +125,18 @@ async def scan_text(request: ScanTextRequest):
     if urgency["flagged"]:
         score += 20
         signals.append("High urgency tone")
+
+    for kw in OTP_KEYWORDS:
+        if kw in text_lower:
+            score += 40
+            signals.append(f"Sensitive info request: {kw}")
+            break
+            
+    for kw in PAYMENT_KEYWORDS:
+        if kw in text_lower:
+            score += 30
+            signals.append(f"Payment requested: {kw}")
+            break
         
     # 2. Interactive AI Response
     ai_reply = ""
@@ -132,17 +144,20 @@ async def scan_text(request: ScanTextRequest):
     if await check_ollama_available():
         # System prompt for forensic assistant
         system_prompt = """You are "ShieldCall Forensic Assistant", a specialized security AI.
-Your goal is to help the user analyze a potential scam call in real-time.
-Respond directly to the user's queries or statements.
-If they share what a caller said, analyze the risk and warn them if it sounds like a scam.
-Keep your responses concise, helpful, and natural.
+Your goal is to help the user identify scams and phishing attempts in real-time.
+Be extremely VIGILANT. If you see ANY mention of OTPs, PINs, passwords, bank transfers, or UPI, you MUST flag it as High Risk.
+
+Rules:
+1. NEVER tell a user it is safe if they are being asked for sensitive information.
+2. If the user is transcribing a caller's voice, analyze if that caller is trying to manipulate them.
+3. Keep responses direct and security-focused.
 
 CRITICAL: You must ALWAYS return a JSON object with this exact structure:
 {
   "risk_score": <0-100 integer>,
   "is_scam": <boolean>,
   "analysis": "<short analysis of the current input>",
-  "reply": "<your conversational response to the user>"
+  "reply": "<your conversational response to the user. If risk is high, START with 'WARNING:'>"
 }"""
         try:
             # Prepare messages for Ollama: history + current text

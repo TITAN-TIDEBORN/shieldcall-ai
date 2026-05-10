@@ -4,8 +4,13 @@ All settings have sensible defaults. No .env file required for demo mode.
 """
 
 OLLAMA_BASE_URL = "http://localhost:11434"
-OLLAMA_MODEL = "llama3"          # Options: "llama3", "mistral", "phi3", "gemma2"
-OLLAMA_FALLBACK_MODE = True      # Use mock responses if Ollama is unavailable
+OLLAMA_MODEL = "llama3"
+OLLAMA_FALLBACK_MODE = True
+
+# Cloud AI Settings (Set GEMINI_API_KEY to enable 'Real AI' mode)
+GEMINI_API_KEY = "" # User can put their key here
+GEMINI_MODEL = "gemini-1.5-flash"
+USE_CLOUD_AI = bool(GEMINI_API_KEY)
 
 RISK_THRESHOLD = 60              # Calls below this score are "forwarded"
 AUTO_SIMULATE_INTERVAL = 0       # Seconds between auto-simulated calls (0 = off)

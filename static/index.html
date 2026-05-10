@@ -867,16 +867,54 @@
                 switchTab('live');
             }
             
+            if (event === 'transcript_chunk') {
+                const box = document.getElementById('transcriptBox');
+                if (!box) return;
+                let activeMsg = box.querySelector('.msg.ai.streaming');
+                if (!activeMsg) {
+                    activeMsg = document.createElement('div');
+                    activeMsg.className = 'msg ai streaming';
+                    box.appendChild(activeMsg);
+                }
+                activeMsg.textContent += data.text;
+                box.scrollTop = box.scrollHeight;
+            }
+
             if (event === 'transcript_line') {
                 const box = document.getElementById('transcriptBox');
-                const div = document.createElement('div');
-                div.className = `msg ${data.role}`;
-                const cleaned = cleanText(data.text);
-                div.textContent = cleaned;
-                box.appendChild(div);
+                if (!box) return;
+                
+                // Finalize streaming message if it exists
+                const streamingMsg = box.querySelector('.msg.ai.streaming');
+                if (streamingMsg && data.role === 'ai') {
+                    streamingMsg.classList.remove('streaming');
+                    streamingMsg.textContent = cleanText(data.text);
+                } else {
+                    const div = document.createElement('div');
+                    div.className = `msg ${data.role}`;
+                    const cleaned = cleanText(data.text);
+                    div.textContent = cleaned;
+                    box.appendChild(div);
+                }
+                
                 box.scrollTop = box.scrollHeight;
                 const currentLang = document.getElementById('liveLangBadge').textContent || "English";
-                speakText(cleaned, currentLang, data.role);
+                speakText(data.text, currentLang, data.role);
+            }
+            
+            if (event === 'ai_thinking') {
+                const box = document.getElementById('transcriptBox');
+                const loader = document.createElement('div');
+                loader.className = 'msg ai thinking';
+                loader.innerHTML = '<span class="pulse"></span> Analyzing caller intent...';
+                loader.id = 'aiLoader';
+                box.appendChild(loader);
+                box.scrollTop = box.scrollHeight;
+            }
+
+            if (event === 'transcript_line' || event === 'transcript_chunk') {
+                const loader = document.getElementById('aiLoader');
+                if (loader) loader.remove();
             }
             
             if (event === 'language_detected') {
@@ -997,6 +1035,15 @@
             userMsg.className = 'msg caller';
             userMsg.textContent = text;
             box.appendChild(userMsg);
+            
+            // Add "Analyzing" placeholder
+            const placeholder = document.createElement('div');
+            placeholder.className = 'msg ai';
+            placeholder.id = 'scanPlaceholder';
+            placeholder.innerHTML = '<span class="pulse"></span> Forensic analysis in progress...';
+            placeholder.style.fontStyle = 'italic';
+            placeholder.style.opacity = '0.7';
+            box.appendChild(placeholder);
             box.scrollTop = box.scrollHeight;
             
             fetch('/api/scan-text', {
@@ -1004,6 +1051,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: text, history: scanHistory })
             }).then(r => r.json()).then(data => {
+                // Remove placeholder
+                const ph = document.getElementById('scanPlaceholder');
+                if (ph) ph.remove();
+
                 // Update history
                 scanHistory.push({role: 'caller', text: text});
                 scanHistory.push({role: 'ai', text: data.ai_reply});
@@ -1012,6 +1063,11 @@
                 // Add AI reply to UI
                 const aiMsg = document.createElement('div');
                 aiMsg.className = 'msg ai';
+                if (data.risk_score >= 60) {
+                    aiMsg.style.borderLeft = '4px solid var(--danger)';
+                    aiMsg.style.background = 'rgba(239, 68, 68, 0.1)';
+                    aiMsg.style.color = '#fecaca';
+                }
                 aiMsg.textContent = data.ai_reply;
                 box.appendChild(aiMsg);
                 box.scrollTop = box.scrollHeight;
@@ -1028,6 +1084,9 @@
                 scamBadge.textContent = data.scam_status.toUpperCase();
                 scamBadge.className = 'badge ' + (data.scam_status === 'clean' ? 'pass' : 'fail');
                 document.getElementById('scanSignalsList').innerHTML = data.signals.map(s => `• ${s}`).join('<br>');
+            }).catch(err => {
+                const ph = document.getElementById('scanPlaceholder');
+                if (ph) ph.remove();
             });
         }
 
