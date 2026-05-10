@@ -583,15 +583,10 @@
 
                         <div style="display: flex; flex-direction: column; gap: 1rem;">
                             <div id="scanInterimText" style="font-size: 0.875rem; color: var(--primary); min-height: 1.5rem; font-weight: 500;"></div>
-                            <div style="display: flex; gap: 1rem;">
-                                <button onclick="triggerGreeting()" style="flex: 1; padding: 0.75rem; background: var(--bg-card); border: 1px solid var(--primary); color: var(--primary); border-radius: 0.75rem;">
-                                    AI: Initiate Greeting
-                                </button>
-                                <button id="btnScanVoice" onclick="toggleVoiceScan()" style="flex: 2; padding: 0.75rem; font-size: 1rem; border-radius: 0.75rem; background: var(--primary); box-shadow: 0 0 20px var(--primary-glow);">
-                                    <span id="scanVoiceIcon">🎙️</span>
-                                    <span id="scanVoiceText">Listen to Caller</span>
-                                </button>
-                            </div>
+                            <button id="btnScanVoice" onclick="toggleVoiceScan()" style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 0.75rem; background: var(--primary); box-shadow: 0 0 20px var(--primary-glow);">
+                                <span id="scanVoiceIcon">🎙️</span>
+                                <span id="scanVoiceText">Start Live AI Screening</span>
+                            </button>
                         </div>
                     </div>
 
@@ -1022,7 +1017,7 @@
         function resetScanHistory() {
             scanHistory = [];
             const box = document.getElementById('scanChatBox');
-            if (box) box.innerHTML = '<div class="msg ai">Forensic engine reset. How can I help?</div>';
+            if (box) box.innerHTML = '<div class="msg ai">Screener engine reset. Ready for new incoming call.</div>';
             document.getElementById('scanResults').style.display = 'none';
         }
 
@@ -1035,12 +1030,17 @@
                 recognition.interimResults = true;
                 recognition.onstart = () => {
                     isRecording = true;
-                    document.getElementById('scanVoiceText').textContent = "Listening...";
+                    document.getElementById('scanVoiceText').textContent = "AI Screening Active...";
                     document.getElementById('btnScanVoice').style.background = 'var(--danger)';
+                    
+                    // Auto-greet on first start
+                    if (scanHistory.length === 0) {
+                        setTimeout(triggerGreeting, 800);
+                    }
                 };
                 recognition.onend = () => {
                     isRecording = false;
-                    document.getElementById('scanVoiceText').textContent = "Initialize Listening";
+                    document.getElementById('scanVoiceText').textContent = "Start Live AI Screening";
                     document.getElementById('btnScanVoice').style.background = 'var(--primary)';
                 };
                 recognition.onresult = (e) => {
@@ -1053,14 +1053,14 @@
                     
                     if (e.results[e.results.length-1].isFinal) {
                         if (interim) interim.textContent = "";
-                        analyzeVoiceText(text);
+                        if (text.trim().length > 1) {
+                            analyzeVoiceText(text.trim());
+                        }
                     }
                 };
             }
             if (isRecording) recognition.stop();
-            else {
-                recognition.start();
-            }
+            else recognition.start();
         }
 
         function triggerGreeting() {
