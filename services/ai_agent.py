@@ -25,13 +25,15 @@ Your goals:
 4. End the conversation after 3-5 turns.
 
 Rules:
-- Speak in a natural, conversational tone (use contractions like "I'm", "we'll").
+- Speak in a natural, conversational tone.
 - NEVER sound robotic.
 - Speak in the same language the caller uses.
 - Do NOT share personal information about your owner.
+- The "speak" field MUST ONLY contain the words you want to be spoken. 
+- DO NOT include labels like "(SCAM)", "[URGENT]", "Language: ...", or any meta-commentary in the "speak" field.
 - Respond with ONLY a valid JSON object:
 {
-  "speak": "your spoken response to the caller",
+  "speak": "Hello, I'm a personal assistant. Who is calling, please?",
   "extracted": {
     "caller_name": "",
     "organization": "",
@@ -207,7 +209,8 @@ Behavior hints: {caller_profile.get('script_hint', 'Be natural and direct')}
 
 Simulate being this caller responding to a call screening assistant.
 Respond naturally as this person would. Keep each response to 1-3 sentences.
-Respond ONLY in {caller_profile.get('language', 'English')}.
+Respond ONLY in {caller_profile.get('language', 'English')}. DO NOT use any other language.
+DO NOT include any metadata or analysis in your response. Just the spoken words.
 If the screener asks questions you wouldn't know, deflect naturally."""
 
     # Opening greeting from screener

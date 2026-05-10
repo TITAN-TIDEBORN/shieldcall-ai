@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api", tags=["calls"])
 
 class ScanTextRequest(BaseModel):
     text: str
+    history: Optional[list] = []
 
 
 
@@ -97,7 +98,7 @@ def update_call_action(call_id: int, body: dict, db: Session = Depends(get_db)):
 
 @router.post("/scan-text")
 async def scan_text(request: ScanTextRequest):
-    """Scan arbitrary text (from manual voice input) for scam patterns using heuristics and AI."""
+    """Scan arbitrary text and provide an interactive AI response."""
     from services.auth_checks import scam_check, urgency_check
     from config import SCAM_KEYWORDS, URGENCY_KEYWORDS, OTP_KEYWORDS, PAYMENT_KEYWORDS
     from services.language import detect_language
@@ -105,6 +106,7 @@ async def scan_text(request: ScanTextRequest):
     import json
     
     text = request.text
+    history = request.history or []
     scam = scam_check(text)
     urgency = urgency_check(text)
     lang = detect_language(text)
@@ -113,7 +115,7 @@ async def scan_text(request: ScanTextRequest):
     signals = []
     text_lower = text.lower()
     
-    # 1. Check basic keywords
+    # 1. Heuristics for the current segment
     for kw in SCAM_KEYWORDS:
         if kw in text_lower:
             score += 35
@@ -124,74 +126,65 @@ async def scan_text(request: ScanTextRequest):
         score += 20
         signals.append("High urgency tone")
         
-    for kw in OTP_KEYWORDS:
-        if kw in text_lower:
-            score += 30
-            signals.append(f"Sensitive info request: {kw}")
-            break
-            
-    for kw in PAYMENT_KEYWORDS:
-        if kw in text_lower:
-            score += 25
-            signals.append(f"Payment requested: {kw}")
-            break
-            
-    # 2. Try LLM detection for deep context understanding
+    # 2. Interactive AI Response
+    ai_reply = ""
     llm_reason = ""
     if await check_ollama_available():
-        system_prompt = """You are an advanced anti-scam AI analyzer.
-Analyze the following transcript from a phone call.
-Is it a scam, phishing attempt, or legitimate?
-Return ONLY a valid JSON object:
+        # System prompt for forensic assistant
+        system_prompt = """You are "ShieldCall Forensic Assistant", a specialized security AI.
+Your goal is to help the user analyze a potential scam call in real-time.
+Respond directly to the user's queries or statements.
+If they share what a caller said, analyze the risk and warn them if it sounds like a scam.
+Keep your responses concise, helpful, and natural.
+
+CRITICAL: You must ALWAYS return a JSON object with this exact structure:
 {
-  "risk_score": <0-100 integer, 100 is definite scam>,
+  "risk_score": <0-100 integer>,
   "is_scam": <boolean>,
-  "reason": "<1 sentence explanation>"
+  "analysis": "<short analysis of the current input>",
+  "reply": "<your conversational response to the user>"
 }"""
         try:
-            raw_res = await _call_ollama([{"role": "user", "content": text}], system_prompt)
+            # Prepare messages for Ollama: history + current text
+            messages = []
+            for h in history:
+                role = "assistant" if h["role"] == "ai" else "user"
+                messages.append({"role": role, "content": h["text"]})
+            messages.append({"role": "user", "content": text})
+            
+            raw_res = await _call_ollama(messages, system_prompt)
             res = json.loads(raw_res)
+            
             llm_score = res.get("risk_score", 0)
             llm_is_scam = res.get("is_scam", False)
-            llm_reason = res.get("reason", "")
+            llm_analysis = res.get("analysis", "")
+            ai_reply = res.get("reply", "")
             
-            # Blend the scores: take the highest risk assessment
             score = max(score, llm_score)
             if llm_is_scam:
                 scam = "scam"
-                if llm_reason:
-                    signals.insert(0, f"AI Analysis: {llm_reason}")
-            elif llm_reason and llm_score > 30:
-                signals.append(f"AI Note: {llm_reason}")
+                if llm_analysis:
+                    signals.insert(0, f"AI Analysis: {llm_analysis}")
+            elif llm_analysis and llm_score > 30:
+                signals.append(f"AI Note: {llm_analysis}")
                 
-        except Exception as e:
+        except Exception:
             pass
             
+    # Fallback if AI fails or isn't available
+    if not ai_reply:
+        warnings = {
+            "English": {"safe": "This segment appears safe. How else can I help?", "scam": "Warning! This pattern strongly suggests a scam attempt."},
+            "Tamil": {"safe": "இது பாதுகாப்பானது. நான் வேறு எப்படி உதவ முடியும்?", "scam": "எச்சரிக்கை! இது ஒரு மோசடி முயற்சி போல் தெரிகிறது."},
+        }
+        msg_dict = warnings.get(lang, warnings["English"])
+        ai_reply = msg_dict["scam"] if score >= 40 else msg_dict["safe"]
+    
     score = min(100, score)
     level = "low" if score < 40 else "medium" if score < 70 else "high"
-    
-    # Fix the UI badge if score is high but keyword checker missed it
     if score >= 40 and scam != "scam":
         scam = "flagged"
         
-    warnings = {
-        "English": {"safe": "This message appears to be safe.", "scam": "Warning, this sounds like a scam."},
-        "Tamil": {"safe": "இது பாதுகாப்பானது.", "scam": "எச்சரிக்கை, இது மோசடி போல் தெரிகிறது."},
-        "Hindi": {"safe": "यह सुरक्षित है।", "scam": "चेतावनी, यह घोटाला लगता है।"},
-        "Telugu": {"safe": "ఇది సురక్షితం.", "scam": "హెచ్చరిక, ఇది స్కామ్ లాగా ఉంది."},
-        "Kannada": {"safe": "ಇದು ಸುರಕ್ಷಿತವಾಗಿದೆ.", "scam": "ಎಚ್ಚರಿಕೆ, ಇದು ಹಗರಣ ಎಂದು ತೋರುತ್ತದೆ."},
-        "Malayalam": {"safe": "ഇത് സുരക്ഷിതമാണ്.", "scam": "മുന്നറിയിപ്പ്, ഇതൊരു തട്ടിപ്പാണെന്ന് തോന്നുന്നു."},
-        "Bengali": {"safe": "এটি নিরাপদ।", "scam": "সতর্কতা, এটি একটি স্ক্যাম মনে হচ্ছে।"},
-    }
-    
-    msg_dict = warnings.get(lang, warnings["English"])
-    
-    # Use AI generated reason if available and in English, else localized
-    if llm_reason and score >= 40 and lang == "English":
-        ai_reply = f"Warning. {llm_reason}"
-    else:
-        ai_reply = msg_dict["scam"] if score >= 40 else msg_dict["safe"]
-    
     return {
         "text": text,
         "scam_status": scam,

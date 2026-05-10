@@ -537,36 +537,54 @@
 
             <!-- VOICE SCAN TAB -->
             <div id="tab-scan" class="tab-content">
-                <div class="card" style="max-width: 800px; margin: 0 auto; text-align: center; padding: 3rem 1.5rem;">
-                    <div style="margin-bottom: 2rem;">
-                        <h2 style="margin: 0; font-size: 1.5rem;">Manual Audio Forensics</h2>
-                        <p style="color:var(--text-muted); margin-top: 0.5rem;">Analyze real-time audio streams for scam patterns and urgency vectors.</p>
-                    </div>
-                    
-                    <button id="btnScanVoice" onclick="toggleVoiceScan()" style="padding: 1.25rem 2.5rem; font-size: 1.1rem; border-radius: 9999px; width: 300px; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);">
-                        <span id="scanVoiceIcon">🎙️</span>
-                        <span id="scanVoiceText">Initialize Listening</span>
-                    </button>
-                    
-                    <div style="margin-top: 3rem; text-align: left;">
-                        <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Real-time Transcription</div>
-                        <div id="scanLiveTranscript" style="min-height: 100px; padding: 1.5rem; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 1rem; margin-bottom: 1.5rem; color: var(--text-muted); font-size: 1.1rem; line-height: 1.6;">
-                            Voice engine ready...
+                <div class="grid grid-2" style="height: calc(100vh - 180px); gap: 1.5rem;">
+                    <!-- LEFT: Chat Interface -->
+                    <div class="card" style="display: flex; flex-direction: column; height: 100%; margin-bottom: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2 style="margin: 0; font-size: 1.25rem;">Forensic Analysis Chat</h2>
+                            <button class="btn-secondary" onclick="resetScanHistory()">Clear Session</button>
                         </div>
                         
-                        <div id="scanResults" style="display: none;" class="card">
-                            <h3 style="margin-top: 0; margin-bottom: 1rem;">Forensic Analysis</h3>
+                        <div id="scanChatBox" class="transcript-box" style="flex: 1; margin-bottom: 1.5rem;">
+                            <div class="msg ai">Forensic engine initialized. Speak to start analysis...</div>
+                        </div>
+
+                        <div style="display: flex; flex-direction: column; gap: 1rem;">
+                            <div id="scanInterimText" style="font-size: 0.875rem; color: var(--primary); min-height: 1.5rem; font-weight: 500;"></div>
+                            <button id="btnScanVoice" onclick="toggleVoiceScan()" style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 0.75rem; background: var(--primary); box-shadow: 0 0 20px var(--primary-glow);">
+                                <span id="scanVoiceIcon">🎙️</span>
+                                <span id="scanVoiceText">Initialize Listening</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Real-time Metrics -->
+                    <div style="display: flex; flex-direction: column; gap: 1.5rem; height: 100%;">
+                        <div class="card" id="scanResults" style="display: none;">
+                            <h3 style="margin-top: 0; margin-bottom: 1.5rem;">Live Forensic Metrics</h3>
                             <div class="grid grid-2" style="margin-bottom: 1.5rem;">
                                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Cumulative Risk</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Cumulative Risk</span>
                                     <span class="badge" id="scanRiskBadge">0/100</span>
                                 </div>
                                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                    <span style="font-size: 0.75rem; color: var(--text-muted);">Threat Status</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Threat Status</span>
                                     <span class="badge" id="scanScamBadge">Clean</span>
                                 </div>
                             </div>
-                            <div id="scanSignalsList" style="font-size: 0.9375rem; color: var(--warning); padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 0.5rem;"></div>
+                            <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase;">Detected Patterns</div>
+                            <div id="scanSignalsList" style="font-size: 0.875rem; color: var(--warning); padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 0.5rem; line-height: 1.5;"></div>
+                        </div>
+
+                        <div class="card" style="flex: 1;">
+                            <h3 style="margin-top: 0; margin-bottom: 1rem;">Scanning Instructions</h3>
+                            <ul style="color: var(--text-muted); font-size: 0.9rem; padding-left: 1.25rem; line-height: 1.6;">
+                                <li>Enable microphone and click "Initialize Listening".</li>
+                                <li>Speak or play suspected audio near your mic.</li>
+                                <li>The AI will transcribe and analyze segments in real-time.</li>
+                                <li>Ask questions like "Is this part a scam?" for deeper context.</li>
+                                <li>Risk levels are recalculated with every turn.</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -624,8 +642,12 @@
                         <h2 style="margin-top: 0; margin-bottom: 1.5rem; font-size: 1.25rem;">Voice Synthesis Engine</h2>
                         <div style="display: flex; flex-direction: column; gap: 1.25rem;">
                             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                                <label style="font-size: 0.875rem; color: var(--text-muted);">Preferred AI Voice</label>
-                                <select id="ttsVoiceSelect"></select>
+                                <label style="font-size: 0.875rem; color: var(--text-muted);">Assistant Voice (AI)</label>
+                                <select id="ttsAssistantVoiceSelect"></select>
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                <label style="font-size: 0.875rem; color: var(--text-muted);">Caller Voice (Simulation)</label>
+                                <select id="ttsCallerVoiceSelect"></select>
                             </div>
                             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                                 <div style="display: flex; justify-content: space-between;">
@@ -692,7 +714,6 @@
         function toggleAudio() {
             isAudioEnabled = !isAudioEnabled;
             const btn = document.getElementById('btnAudioToggle');
-            const icon = document.getElementById('audioIcon');
             if (isAudioEnabled) {
                 btn.classList.remove('btn-secondary');
                 btn.classList.add('btn-success');
@@ -708,31 +729,64 @@
         let voices = [];
         function populateVoiceList() {
             voices = window.speechSynthesis.getVoices();
-            const voiceSelect = document.getElementById('ttsVoiceSelect');
-            if (!voiceSelect) return;
-            voiceSelect.innerHTML = '';
+            const assistantSelect = document.getElementById('ttsAssistantVoiceSelect');
+            const callerSelect = document.getElementById('ttsCallerVoiceSelect');
+            if (!assistantSelect || !callerSelect) return;
+            
+            assistantSelect.innerHTML = '';
+            callerSelect.innerHTML = '';
+            
             voices.forEach((voice, i) => {
-                const option = document.createElement('option');
-                option.textContent = `${voice.name} (${voice.lang})`;
-                option.value = i;
-                voiceSelect.appendChild(option);
+                const opt1 = document.createElement('option');
+                opt1.textContent = `${voice.name} (${voice.lang})`;
+                opt1.value = i;
+                assistantSelect.appendChild(opt1);
+                
+                const opt2 = document.createElement('option');
+                opt2.textContent = `${voice.name} (${voice.lang})`;
+                opt2.value = i;
+                callerSelect.appendChild(opt2);
             });
+
+            // Set different defaults if possible
+            if (voices.length > 1) {
+                callerSelect.selectedIndex = Math.min(1, voices.length - 1);
+            }
         }
         populateVoiceList();
         if (speechSynthesis.onvoiceschanged !== undefined) {
             speechSynthesis.onvoiceschanged = populateVoiceList;
         }
 
+        function cleanText(text) {
+            if (!text) return "";
+            return text.replace(/\((SCAM|URGENT|WARNING|SPAM|FLAGGED|SUSPICIOUS)\)/gi, '')
+                       .replace(/\[(SCAM|URGENT|WARNING|SPAM|FLAGGED|SUSPICIOUS)\]/gi, '')
+                       .replace(/Language:\s*\w+/gi, '')
+                       .replace(/Intent:\s*\w+/gi, '')
+                       .replace(/Turn\s*\d+:/gi, '')
+                       .trim();
+        }
+
         function speakText(text, langName, role) {
             if (!isAudioEnabled) return;
             if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                const voiceIdx = document.getElementById('ttsVoiceSelect').value;
-                if (voices.length > 0 && voiceIdx !== "") {
-                    utterance.voice = voices[voiceIdx];
+                const utterance = new SpeechSynthesisUtterance(cleanText(text));
+                
+                const targetLangCode = langMap[langName] || "en-US";
+                // Try to find a voice that exactly matches the language
+                const matchingVoice = voices.find(v => v.lang.toLowerCase().startsWith(targetLangCode.split('-')[0].toLowerCase()));
+                
+                if (matchingVoice) {
+                    utterance.voice = matchingVoice;
                 } else {
-                    utterance.lang = langMap[langName] || "en-US";
+                    const selectorId = (role === 'ai') ? 'ttsAssistantVoiceSelect' : 'ttsCallerVoiceSelect';
+                    const voiceIdx = document.getElementById(selectorId).value;
+                    if (voices.length > 0 && voiceIdx !== "") {
+                        utterance.voice = voices[voiceIdx];
+                    }
                 }
+                
                 const pitch = parseFloat(document.getElementById('ttsPitch').value);
                 const rate = parseFloat(document.getElementById('ttsRate').value);
                 utterance.rate = rate;
@@ -817,11 +871,12 @@
                 const box = document.getElementById('transcriptBox');
                 const div = document.createElement('div');
                 div.className = `msg ${data.role}`;
-                div.textContent = data.text;
+                const cleaned = cleanText(data.text);
+                div.textContent = cleaned;
                 box.appendChild(div);
                 box.scrollTop = box.scrollHeight;
                 const currentLang = document.getElementById('liveLangBadge').textContent || "English";
-                speakText(data.text, currentLang, data.role);
+                speakText(cleaned, currentLang, data.role);
             }
             
             if (event === 'language_detected') {
@@ -887,6 +942,15 @@
         // Speech Recognition for Voice Scan
         let recognition;
         let isRecording = false;
+        let scanHistory = [];
+
+        function resetScanHistory() {
+            scanHistory = [];
+            const box = document.getElementById('scanChatBox');
+            if (box) box.innerHTML = '<div class="msg ai">Forensic engine reset. How can I help?</div>';
+            document.getElementById('scanResults').style.display = 'none';
+        }
+
         function toggleVoiceScan() {
             if (!recognition) {
                 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -909,23 +973,53 @@
                     for (let i = e.resultIndex; i < e.results.length; ++i) {
                         text += e.results[i][0].transcript;
                     }
-                    document.getElementById('scanLiveTranscript').textContent = text;
-                    if (e.results[e.results.length-1].isFinal) analyzeVoiceText(text);
+                    const interim = document.getElementById('scanInterimText');
+                    if (interim) interim.textContent = text;
+                    
+                    if (e.results[e.results.length-1].isFinal) {
+                        if (interim) interim.textContent = "";
+                        analyzeVoiceText(text);
+                    }
                 };
             }
             if (isRecording) recognition.stop();
             else {
-                document.getElementById('scanLiveTranscript').textContent = "...";
                 recognition.start();
             }
         }
 
         function analyzeVoiceText(text) {
+            const box = document.getElementById('scanChatBox');
+            if (!box) return;
+
+            // Add user message to UI
+            const userMsg = document.createElement('div');
+            userMsg.className = 'msg caller';
+            userMsg.textContent = text;
+            box.appendChild(userMsg);
+            box.scrollTop = box.scrollHeight;
+            
             fetch('/api/scan-text', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: text })
+                body: JSON.stringify({ text: text, history: scanHistory })
             }).then(r => r.json()).then(data => {
+                // Update history
+                scanHistory.push({role: 'caller', text: text});
+                scanHistory.push({role: 'ai', text: data.ai_reply});
+                if(scanHistory.length > 10) scanHistory = scanHistory.slice(-10);
+
+                // Add AI reply to UI
+                const aiMsg = document.createElement('div');
+                aiMsg.className = 'msg ai';
+                aiMsg.textContent = data.ai_reply;
+                box.appendChild(aiMsg);
+                box.scrollTop = box.scrollHeight;
+                
+                // Speak the reply
+                speakText(data.ai_reply, data.detected_language || "English", 'ai');
+
+                // Update Metrics
                 document.getElementById('scanResults').style.display = 'block';
                 const riskBadge = document.getElementById('scanRiskBadge');
                 riskBadge.textContent = `${data.risk_score}/100`;
