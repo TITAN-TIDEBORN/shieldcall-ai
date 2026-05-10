@@ -4,22 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShieldCall AI | Security Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.4);
             --bg-deep: #020617;
-            --bg-sidebar: #0f172a;
-            --bg-card: #1e293b;
+            --bg-sidebar: rgba(15, 23, 42, 0.7);
+            --bg-card: rgba(30, 41, 59, 0.3);
+            --border: rgba(255, 255, 255, 0.08);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --primary: #3b82f6;
-            --primary-glow: rgba(59, 130, 246, 0.5);
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
-            --border: rgba(255, 255, 255, 0.1);
-            --sidebar-width: 260px;
+            --font-head: 'Space Grotesk', sans-serif;
+            --font-body: 'Outfit', sans-serif;
         }
 
         * {
@@ -28,32 +31,64 @@
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            font-family: var(--font-body);
             background-color: var(--bg-deep);
             color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            display: flex;
             height: 100vh;
+            display: flex;
             overflow: hidden;
         }
 
-        /* Sidebar Styling */
-        aside {
-            width: var(--sidebar-width);
-            background-color: var(--bg-sidebar);
+        /* Animated Mesh Background */
+        .mesh-container {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background: #020617;
+        }
+        .mesh-ball {
+            position: absolute;
+            width: 60vw; height: 60vw;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            animation: meshMove 25s infinite alternate ease-in-out;
+        }
+        .ball-1 { background: #3b82f6; top: -10%; left: -10%; }
+        .ball-2 { background: #8b5cf6; bottom: -10%; right: -10%; animation-delay: -5s; }
+        .ball-3 { background: #1e3a8a; top: 40%; left: 30%; animation-duration: 35s; }
+
+        @keyframes meshMove {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10%, 10%) scale(1.2); }
+        }
+
+        h1, h2, h3, .brand-text {
+            font-family: var(--font-head);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        /* Layout Structure */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            backdrop-filter: blur(20px);
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            flex-shrink: 0;
-            z-index: 100;
+            padding: 2rem 1.5rem;
+            z-index: 10;
         }
 
-        .sidebar-header {
-            padding: 2rem 1.5rem;
+        .logo-area {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            margin-bottom: 3rem;
+            padding: 0 0.5rem;
         }
 
         .logo-icon {
@@ -64,19 +99,21 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
             box-shadow: 0 0 15px var(--primary-glow);
+            overflow: hidden;
+        }
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .logo-text {
-            font-size: 1.25rem;
-            font-weight: 700;
-            letter-spacing: -0.025em;
+        .brand-text {
+            font-size: 1.5rem;
             background: linear-gradient(to right, #fff, #94a3b8);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
         nav {
             flex: 1;
             padding: 1rem 0.75rem;
@@ -163,7 +200,7 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            background-color: var(--bg-deep);
+            background: transparent;
             overflow: hidden;
             position: relative;
         }
@@ -175,13 +212,14 @@
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--border);
-            background: rgba(15, 23, 42, 0.5);
-            backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(15px);
             z-index: 10;
         }
 
         .header-title {
-            font-size: 1.1rem;
+            font-family: var(--font-head);
+            font-size: 1.25rem;
             font-weight: 600;
         }
 
@@ -191,16 +229,9 @@
             align-items: center;
         }
 
-        .content-area {
-            flex: 1;
-            padding: 2rem;
-            overflow-y: auto;
-            position: relative;
-        }
-
         .tab-content {
             display: none;
-            animation: fadeIn 0.3s ease-in-out;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .tab-content.active {
@@ -208,23 +239,33 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 2.5rem;
+            overflow-y: auto;
+            position: relative;
         }
 
         /* UI Elements */
         .card {
             background: var(--bg-card);
+            backdrop-filter: blur(12px);
             border: 1px solid var(--border);
-            border-radius: 1rem;
+            border-radius: 1.25rem;
             padding: 1.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
             margin-bottom: 1.5rem;
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .card:hover {
-            border-color: rgba(255, 255, 255, 0.2);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(59, 130, 246, 0.15);
         }
 
         .grid { display: grid; gap: 1.5rem; }
@@ -384,11 +425,19 @@
     </style>
 </head>
 <body>
+    <!-- Animated Mesh Background -->
+    <div class="mesh-container">
+        <div class="mesh-ball ball-1"></div>
+        <div class="mesh-ball ball-2"></div>
+        <div class="mesh-ball ball-3"></div>
+    </div>
 
-    <aside>
-        <div class="sidebar-header">
-            <div class="logo-icon">S</div>
-            <div class="logo-text">ShieldCall AI</div>
+    <aside class="sidebar">
+        <div class="logo-area">
+            <div class="logo-icon">
+                <img src="/static/logo.png" alt="ShieldCall Logo">
+            </div>
+            <span class="brand-text">ShieldCall</span>
         </div>
 
         <nav>
