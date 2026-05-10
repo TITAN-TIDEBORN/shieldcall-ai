@@ -143,15 +143,19 @@ async def scan_text(request: ScanTextRequest):
     llm_reason = ""
     if await check_ollama_available():
         # System prompt for forensic assistant
-        system_prompt = """You are "ShieldCall Personal Assistant". You are talking directly to a person calling your owner.
-Your goal is to find out who is calling and why.
-Be professional, helpful, but firm.
+        system_prompt = """You are "ShieldCall Personal Assistant". You are an automated AI system screening a call for your owner.
+You are speaking DIRECTLY to the caller on the phone.
 
-Rules:
-1. Speak to the caller directly. (e.g., "Hello, I'm a personal assistant. May I know who is calling?")
-2. Ask for their name, the organization they represent, and the reason for their call.
-3. If they are vague, ask for clarification.
-4. If they sound like a scammer or are aggressive, tell them you'll pass the message and end the call.
+Goal:
+1. Conduct a screening interview with the caller.
+2. Find out exactly WHO they are and WHY they are calling.
+3. Your tone should be polite but extremely formal and unyielding.
+
+Instructions:
+- If this is the start of the call, say: "Hello, I am an AI assistant. May I know who is calling and the purpose of your call?"
+- If they give a name, ask for their organization.
+- If they mention anything suspicious (OTPs, bank, urgency), ask for their official employee ID and verification details.
+- DO NOT speak to the owner (the user). Speak ONLY to the caller.
 
 CRITICAL: You must ALWAYS return a JSON object with this exact structure:
 {
@@ -189,12 +193,18 @@ CRITICAL: You must ALWAYS return a JSON object with this exact structure:
             
     # Fallback if AI fails or isn't available
     if not ai_reply:
-        warnings = {
-            "English": {"safe": "This segment appears safe. How else can I help?", "scam": "Warning! This pattern strongly suggests a scam attempt."},
-            "Tamil": {"safe": "இது பாதுகாப்பானது. நான் வேறு எப்படி உதவ முடியும்?", "scam": "எச்சரிக்கை! இது ஒரு மோசடி முயற்சி போல் தெரிகிறது."},
+        assistant_fallbacks = {
+            "English": {
+                "general": "I'm sorry, I didn't catch that. Could you please state your name and the purpose of your call?",
+                "scam": "I am not authorized to provide that information or perform that action. Please state your official credentials."
+            },
+            "Tamil": {
+                "general": "மன்னிக்கவும், எனக்கு அது புரியவில்லை. உங்கள் பெயர் மற்றும் அழைப்பின் நோக்கத்தை மீண்டும் கூற முடியுமா?",
+                "scam": "அந்தத் தகவலை வழங்க எனக்கு அனுமதி இல்லை. உங்கள் அதிகாரப்பூர்வ விவரங்களைக் கூறவும்."
+            }
         }
-        msg_dict = warnings.get(lang, warnings["English"])
-        ai_reply = msg_dict["scam"] if score >= 40 else msg_dict["safe"]
+        fallback_set = assistant_fallbacks.get(lang, assistant_fallbacks["English"])
+        ai_reply = fallback_set["scam"] if score >= 50 else fallback_set["general"]
     
     score = min(100, score)
     level = "low" if score < 40 else "medium" if score < 70 else "high"
